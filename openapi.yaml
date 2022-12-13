@@ -16,7 +16,7 @@ servers:
     description: United States
   - url: https://eu.app.zuva.ai/api/v2
     description: Europe
-  - url: https://japan.app.zuva.ai/api/v2
+  - url: https://jp.app.zuva.ai/api/v2
     description: Japan
 tags:
   - name: Files
@@ -32,6 +32,12 @@ tags:
   - name: Language Classification
     description: |-
       Find out the primary language of your documents.
+  - name: Multi-level Classification
+    description: |-
+      (In Alpha) Find out what type of contracts and contract-related documents you have. The new Multi-Level Classification service provides an order-of-magnitude increase in the number of classification models compared to the classic Document Classification service.
+  - name: Normalization
+    description: |-
+      (In Alpha) Normalize a string containing currencies, dates or durations.
   - name: OCR
     description: |-
       Obtain the text, images and layouts of your documents using Optical Character Recognition.
@@ -128,6 +134,55 @@ paths:
           $ref: '#/components/responses/RequestNotFound'
         "500":
           $ref: '#/components/responses/InternalServerError'
+  /classifications:
+    get:
+      tags:
+        - Document Classification
+      summary: Get multiple document classification statuses
+      description: |-
+        Retrieves the status of one or more document classification status requests. Each request ID should be
+        provided as a query parameter, e.g. `/classifications?request_id=abcde&request_id=fghijk`
+
+        If any or all request IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each request ID.
+
+        A maximum of 1000 request IDs can be included in a single query.
+      operationId: GetClassificationRequestStatuses
+      parameters:
+        - name: request_id
+          in: query
+          description: Request ID
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The status of multiple document classification requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMultipleClassificationStatuses'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      x-code-samples:
+        - lang: shell
+          label: cURL
+          source: |-
+            curl https://us.app.zuva.ai/api/v2/classifications?request_id={id_1}&request_id={id_2} \
+                 -H 'Authorization: Bearer {access-token}'
   /extraction:
     post:
       tags:
@@ -159,7 +214,7 @@ paths:
                     file_ids:
                       - file_id: c5e407f1qk1er7odm6tg
                         field_ids:
-                        - c83868ae-269a-4a1b-b2af-c53e5f91efca
+                          - c83868ae-269a-4a1b-b2af-c53e5f91efca
                         request_id: c5e463f1qk154j5e3sjg
                         status: queued
         "400":
@@ -270,7 +325,7 @@ paths:
         `200 Success`, and the response body will contain the individual error messages for
         each request id.
 
-        A maximum of 100 request IDs can be included in a single query.
+        A maximum of 1000 request IDs can be included in a single query.
       operationId: GetExtractionRequestStatuses
       parameters:
         - name: request_id
@@ -826,6 +881,274 @@ paths:
           $ref: '#/components/responses/RequestNotFound'
         "500":
           $ref: '#/components/responses/InternalServerError'
+  /languages:
+    get:
+      tags:
+        - Language Classification
+      summary: Get multiple language classification statuses
+      description: |-
+        Retrieves the status of one or more language classification status requests. Each request ID should be
+        provided as a query parameter, e.g. `/languages?request_id=abcde&request_id=fghijk`
+
+        If any or all request IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each request ID.
+
+        A maximum of 1000 request IDs can be included in a single query.
+      operationId: GetLanguageRequestStatuses
+      parameters:
+        - name: request_id
+          in: query
+          description: Request ID
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The status of multiple language classification requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMultipleLanguageStatuses'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      x-code-samples:
+        - lang: shell
+          label: cURL
+          source: |-
+            curl https://us.app.zuva.ai/api/v2/languages?request_id={id_1}&request_id={id_2} \
+                 -H 'Authorization: Bearer {access-token}'
+  /mlc:
+    post:
+      tags:
+        - Multi-level Classification
+      summary: Create MLC requests
+      description: |-
+        Creates MLC request for each of the specified files.
+      operationId: CreateMLCRequests
+      requestBody:
+        description: The fileIDs to create MLC requests for.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMLCRequest'
+        required: true
+      responses:
+        "202":
+          description: See response body for status of each request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLCRequestsAccepted'
+              examples:
+                Success:
+                  value:
+                    file_ids:
+                      - file_id: c5e407f1qk1er7odm6tg
+                        request_id: c5e463f1qk154j5e3sjg
+                        status: queued
+        "400":
+          description: Malformed request or missing/invalid `file_ids` attribute.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      x-codegen-request-body-name: body
+  /mlc/{request_id}:
+    get:
+      tags:
+        - Multi-level Classification
+      summary: Get MLC request status
+      description: |-
+        Retrieves the status of a multi-level classification request and,
+        if the status is `complete`, its results.
+      operationId: GetMLCRequestStatus
+      parameters:
+        - name: request_id
+          in: path
+          description: Request ID
+          example: c5e463f1qk154j5e3sjg
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The status and results of the document classification request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MLCStatus'
+              examples:
+                Complete:
+                  value:
+                    file_id: c5e407f1qk1er7odm6tg
+                    request_id: c5e463f1qk154j5e3sjg
+                    status: complete
+                    classifications: ["Contract", "IP Agt", "License Agt"]
+        "400":
+          $ref: '#/components/responses/InvalidRequestId'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/RequestNotFound'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+  /mlcs:
+    get:
+      tags:
+        - Multi-level Classification
+      summary: Get multiple MLC request statuses
+      description: |-
+        Retrieves the status of one or more multi-level classification status requests. Each request ID should be
+        provided as a query parameter, e.g. `/mlcs?request_id=abcde&request_id=fghijk`
+
+        If any or all request IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each request ID.
+
+        A maximum of 1000 request IDs can be included in a single query.
+      operationId: GetMLCRequestStatuses
+      parameters:
+        - name: request_id
+          in: query
+          description: Request ID
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The status of multiple MLC requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMultipleMLCStatuses'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      x-code-samples:
+        - lang: shell
+          label: cURL
+          source: |-
+            curl https://us.app.zuva.ai/api/v2/mlcs?request_id={id_1}&request_id={id_2} \
+                 -H 'Authorization: Bearer {access-token}'
+  /normalize/currency:
+    post:
+      tags:
+        - Normalization
+      summary: Normalize Currency
+      description: |-
+        Normalize currencies found within a string, returning an array of currency values and their denominations.
+      operationId: NormalizeCurrency
+      requestBody:
+        description: The string of text to normalize.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NormalizeCurrencyRequestBody'
+        required: true
+      responses:
+        "200":
+          description: See response body for status of request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizeCurrencyResponseBody'
+        "400":
+          description: "Malformed request, missing/invalid body."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+  /normalize/date:
+    post:
+      tags:
+        - Normalization
+      summary: Normalize Date
+      description: |-
+        Normalize dates found within a string, returning an array of date values (day, month, year).
+      operationId: NormalizeDate
+      requestBody:
+        description: The string of text to normalize.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NormalizeDateRequestBody'
+        required: true
+      responses:
+        "200":
+          description: See response body for status of request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizeDateResponseBody'
+        "400":
+          description: "Malformed request, missing/invalid body."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+  /normalize/duration:
+    post:
+      tags:
+        - Normalization
+      summary: Normalize Duration
+      description: |-
+        Creates a new duration normalize request for a string, returning a request ID and the normalized duration.
+        Normalize durations found within a string, returning an array of duration values and their units.
+      operationId: NormalizeDuration
+      requestBody:
+        description: The string of text to normalize.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NormalizeDurationRequestBody'
+        required: true
+      responses:
+        "200":
+          description: See response body for status of request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NormalizeDurationResponseBody'
+        "400":
+          description: "Malformed request, missing/invalid body."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
   /ocr:
     post:
       tags:
@@ -989,6 +1312,55 @@ paths:
           $ref: '#/components/responses/OcrNotReady'
         "500":
           $ref: '#/components/responses/InternalServerError'
+  /ocr/{request_id}/images/{page_number}:
+    get:
+      tags:
+        - OCR
+      summary: Get OCR page image
+      description: Retrieves a png image of one page of an OCR document.
+      operationId: GetOcrImage
+      parameters:
+        - name: request_id
+          in: path
+          description: Request ID
+          example: c5e463f1qk154j5e3sjg
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: string
+        - name: page_number
+          in: path
+          description: Page Number
+          example: 2
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Image was retrieved successfully.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                example: <binary file content>
+        "204":
+          description: No content of this type was found.
+        "400":
+          $ref: '#/components/responses/InvalidRequestId'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/RequestNotFound'
+        "409":
+          $ref: '#/components/responses/OcrNotReady'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/layouts:
     get:
       tags:
@@ -1063,6 +1435,55 @@ paths:
           $ref: '#/components/responses/OcrNotReady'
         "500":
           $ref: '#/components/responses/InternalServerError'
+  /ocrs:
+    get:
+      tags:
+        - OCR
+      summary: Get multiple OCR statuses
+      description: |-
+        Retrieves the status of one or more OCR status requests. Each request ID should be
+        provided as a query parameter, e.g. `/ocrs?request_id=abcde&request_id=fghijk`
+
+        If any or all request IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each request ID.
+
+        A maximum of 1000 request IDs can be included in a single query.
+      operationId: GetOCRRequestStatuses
+      parameters:
+        - name: request_id
+          in: query
+          description: Request ID
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The status of multiple OCR requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMultipleOCRStatuses'
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+      x-code-samples:
+        - lang: shell
+          label: cURL
+          source: |-
+            curl https://us.app.zuva.ai/api/v2/ocrs?request_id={id_1}&request_id={id_2} \
+                 -H 'Authorization: Bearer {access-token}'
 components:
   responses:
     FieldNotFound:
@@ -1182,6 +1603,18 @@ components:
         start:
           type: integer
           example: 632
+    ClassificationPercentage:
+      type: object
+      required:
+        - classifications
+        - percentage
+      properties:
+        classifications:
+          items:
+            type: string
+          type: array
+        percentage:
+          type: number
     ClassificationRequestsAccepted:
       type: object
       required:
@@ -1214,6 +1647,18 @@ components:
           example: c5e463f1qk154j5e3sjg
         status:
           $ref: '#/components/schemas/StatusEnum'
+    Country:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          description: The ISO 3166-1 alpha-2 code, eg. "CA".
+          type: string
+        name:
+          description: The ISO 3166 country name, eg. "Canada".
+          type: string
     CreateClassificationRequest:
       type: object
       required:
@@ -1256,6 +1701,18 @@ components:
             - c5e407f1qk1er7odm6tg
           items:
             type: string
+    CreateMLCRequest:
+      type: object
+      required:
+        - file_ids
+      properties:
+        file_ids:
+          type: array
+          description: The files to classify
+          example:
+            - c5e407f1qk1er7odm6tg
+          items:
+            type: string
     CreateOcrRequestsBody:
       type: object
       required:
@@ -1267,6 +1724,50 @@ components:
             - c5e407f1qk1er7odm6tg
           items:
             type: string
+    CurrencyValues:
+      type: object
+      required:
+        - value
+        - symbol
+        - precision
+      properties:
+        value:
+          type: string
+          example: 2347.00
+        symbol:
+          type: string
+          example: dollars
+        precision:
+          type: integer
+          example: 2
+    DateValues:
+      type: object
+      required:
+        - day
+        - month
+        - year
+      properties:
+        day:
+          type: integer
+          example: 28
+        month:
+          type: integer
+          example: 11
+        year:
+          type: integer
+          example: 2022
+    DurationValues:
+      type: object
+      required:
+        - unit
+        - value
+      properties:
+        unit:
+          type: string
+          example: months
+        value:
+          type: integer
+          example: 4
     ExtractionRequestStatus:
       type: object
       required:
@@ -1339,14 +1840,19 @@ components:
         - bias
         - description
         - document_count
+        - document_types
         - f_score
         - field_id
         - file_ids
         - is_custom
         - is_trained
+        - jurisdictions
+        - languages
         - name
+        - normalization_type
         - precision
         - recall
+        - tags
       properties:
         bias:
           type: number
@@ -1355,6 +1861,10 @@ components:
           example: Description of the field.
         document_count:
           type: integer
+        document_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassificationPercentage'
         f_score:
           type: number
         field_id:
@@ -1370,25 +1880,48 @@ components:
           type: boolean
         is_trained:
           type: boolean
+        jurisdictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jurisdiction'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguagePercentage'
         name:
           type: string
           example: Field Name
+        normalization_type:
+          type: string
         precision:
           type: number
         recall:
           type: number
+        tags:
+          type: array
+          items:
+            type: string
     FieldMetadataResponse:
       type: object
       required:
         - description
+        - document_types
         - field_id
         - file_ids
         - is_trained
+        - jurisdictions
+        - languages
         - name
+        - normalization_type
         - read_only
+        - tags
       properties:
         description:
           type: string
+        document_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassificationPercentage'
         field_id:
           type: string
           example: 12345678-1234-1234-1234-123456789012
@@ -1400,10 +1933,24 @@ components:
             type: string
         is_trained:
           type: boolean
+        jurisdictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Jurisdiction'
+        languages:
+          type: array
+          items:
+            $ref: '#/components/schemas/LanguagePercentage'
         name:
+          type: string
+        normalization_type:
           type: string
         read_only:
           type: boolean
+        tags:
+          type: array
+          items:
+            type: string
     FieldTrainingRequest:
       type: object
       required:
@@ -1411,8 +1958,9 @@ components:
         - locations
       properties:
         file_id:
-          type: string
-          example: c5e407f1qk1er7odm6tg
+          type: array
+          items:
+            type: integer
         locations:
           type: array
           items:
@@ -1509,6 +2057,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExtractionResult'
+    GetMultipleClassificationStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ClassificationStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
+              classification: Real Estate Agt
+              is_contract: true
     GetMultipleExtractionsResponse:
       type: object
       required:
@@ -1538,9 +2120,107 @@ components:
             $ref: '#/components/schemas/ExtractionRequestStatus'
           example:
             cc1oi51qqhquidfjmiu0:
-                file_id: cc1ohrhqqhqthd7h5lag
-                status: complete
-                request_id: cc1oi51qqhquidfjmiu0
+              file_id: cc1ohrhqqhqthd7h5lag
+              status: complete
+              request_id: cc1oi51qqhquidfjmiu0
+    GetMultipleLanguageStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/LanguageStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
+              language: English
+    GetMultipleMLCStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MLCStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
+              classifications: ["Contract", "IP Agt", "License Agt"]
+    GetMultipleOCRStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OcrRequestStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
     HttpError:
       type: object
       required:
@@ -1562,6 +2242,29 @@ components:
           type: string
           description: An error message providing more details and potential steps to resolve.
           example: Something went wrong, please try again later.
+    Jurisdiction:
+      type: object
+      required:
+        - country
+        - regions
+      properties:
+        country:
+          $ref: '#/components/schemas/Country'
+        regions:
+          description: Any additional state/provincial specifications, eg. ["British Columbia", "Ontario"].
+          items:
+            type: string
+          type: array
+    LanguagePercentage:
+      type: object
+      required:
+        - language
+        - percentage
+      properties:
+        language:
+          type: string
+        percentage:
+          type: number
     LanguageRequestsAccepted:
       type: object
       required:
@@ -1603,12 +2306,132 @@ components:
         start:
           type: integer
           example: 123
+    MLCRequestsAccepted:
+      type: object
+      required:
+        - file_ids
+      properties:
+        file_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/MLCStatus'
+    MLCStatus:
+      type: object
+      required:
+        - file_id
+        - request_id
+        - status
+      properties:
+        classifications:
+          type: array
+          items:
+            type: string
+        error:
+          $ref: '#/components/schemas/HttpErrorDetails'
+        file_id:
+          type: string
+          example: c5e407f1qk1er7odm6tg
+        request_id:
+          type: string
+          example: c5e463f1qk154j5e3sjg
+        status:
+          $ref: '#/components/schemas/StatusEnum'
     NewFieldResponse:
       type: object
       properties:
         field_id:
           type: string
           example: 12345678-1234-1234-1234-123456789012
+    NormalizeCurrencyRequestBody:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          example:
+            - The rent is two thousand three hundred forty seven dollars
+    NormalizeCurrencyResponseBody:
+      type: object
+      required:
+        - request_id
+        - text
+        - sha-256
+        - currency
+      properties:
+        request_id:
+          type: string
+          example: c5e407f1qk1er7odm6tg
+        text:
+          type: string
+          example: The rent is two thousand three hundred forty seven dollars
+        sha-256:
+          type: string
+          example: 9e5073c23ea12c7eb74682089380f9a5b891e3fe2cbe04a3ec89d9d5c004de17
+        currency:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrencyValues'
+    NormalizeDateRequestBody:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          example:
+            - The lease terminates on Monday, November 28, 2022
+    NormalizeDateResponseBody:
+      type: object
+      required:
+        - request_id
+        - text
+        - sha-256
+        - date
+      properties:
+        request_id:
+          type: string
+          example: c5e407f1qk1er7odm6tg
+        text:
+          type: string
+          example: The lease terminates on Monday, November 28, 2022
+        sha-256:
+          type: string
+          example: 914bbbcb1432e0419aa46042cc09fc908c0b3ce822977ebe62d2530c4dd2386c
+        date:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateValues'
+    NormalizeDurationRequestBody:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          example:
+            - The contract expires 4 months after termination
+    NormalizeDurationResponseBody:
+      type: object
+      required:
+        - request_id
+        - text
+        - sha-256
+        - duration
+      properties:
+        request_id:
+          type: string
+          example: c5e407f1qk1er7odm6tg
+        text:
+          type: string
+          example: The contract expires 4 months after termination
+        sha-256:
+          type: string
+          example: 97d7dfd38b649cd6109d0be3f757d65f485d483cce6235294938ca02cd99ed18
+        duration:
+          type: array
+          items:
+            $ref: '#/components/schemas/DurationValues'
     OcrRequestStatus:
       type: object
       required:
