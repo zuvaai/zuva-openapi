@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.1.0
 info:
   title: Zuva DocAI
   description: Embed Contracts AI into your product workflows using Zuva DocAI.
@@ -10,179 +10,30 @@ info:
   license:
     name: Zuva Terms of Service
     url: https://zuva.ai/terms/terms-of-service/
-  version: "2.0"
+  version: '2.0'
 servers:
   - url: https://us.app.zuva.ai/api/v2
     description: United States
   - url: https://eu.app.zuva.ai/api/v2
     description: Europe
-  - url: https://jp.app.zuva.ai/api/v2
-    description: Japan
+security:
+  - bearerAuth: []
 tags:
   - name: Files
-    description: |-
-      Upload and manage your files.
+    description: Upload and manage your files.
   - name: Field Extraction
-    description: |-
-      Identify and extract common legal clauses, provisions and data points from unstructured documents and contracts, including ones written in non-standard language.
-  - name: Document Classification
-    description: |-
-      Find out what type of documents you have — whether they're contracts or not, and what type of contracts
-      (or non-contract documents) they are.
-  - name: Language Classification
-    description: |-
-      Find out the primary language of your documents.
-  - name: Multi-level Classification
-    description: |-
-      (In Alpha) Find out what type of contracts and contract-related documents you have. The new Multi-Level Classification service provides an order-of-magnitude increase in the number of classification models compared to the classic Document Classification service.
+    description: Identify and extract common legal clauses, provisions and data points from unstructured documents and contracts, including ones written in non-standard language.
+  - name: Multi-Level Classification (MLC)
+    description: (In Alpha) Find out what type of contracts and contract-related documents you have. The new Multi-Level Classification service provides an order-of-magnitude increase in the number of classification models compared to the classic Document Classification service.
   - name: Normalization
-    description: |-
-      (In Alpha) Normalize a string containing currencies, dates or durations.
+    description: (In Alpha) Normalize a string containing currencies, dates or durations.
   - name: OCR
-    description: |-
-      Obtain the text, images and layouts of your documents using Optical Character Recognition.
+    description: Obtain the text, images and layouts of your documents using Optical Character Recognition.
   - name: Fields
-    description: |-
-      Discover and manage your fields.
+    description: Discover and manage your fields.
   - name: Training
-    description: |-
-      Train fields on your extractions.
+    description: Train fields on your extractions.
 paths:
-  /classification:
-    post:
-      tags:
-        - Document Classification
-      summary: Create classification requests
-      description: |-
-        Creates a new document classification request for each of the specified files.
-      operationId: CreateClassificationRequests
-      requestBody:
-        description: The file IDs to create classification requests for.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateClassificationRequest'
-        required: true
-      responses:
-        "202":
-          description: See response body for status of each request.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClassificationRequestsAccepted'
-              examples:
-                Success:
-                  value:
-                    file_ids:
-                      - file_id: c5e407f1qk1er7odm6tg
-                        request_id: c5e463f1qk154j5e3sjg
-                        status: queued
-        "400":
-          description: Malformed request or missing/invalid `file_ids` attribute.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      x-codegen-request-body-name: body
-  /classification/{request_id}:
-    get:
-      tags:
-        - Document Classification
-      summary: Get classification request status
-      description: |-
-        Retrieves the status of a document classification request and,
-        if the status is `complete`, its results.
-      operationId: GetClassificationRequestStatus
-      parameters:
-        - name: request_id
-          in: path
-          description: Request ID
-          example: c5e463f1qk154j5e3sjg
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The status and results of the document classification request.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClassificationStatus'
-              examples:
-                Complete:
-                  value:
-                    file_id: c5e407f1qk1er7odm6tg
-                    request_id: c5e463f1qk154j5e3sjg
-                    status: complete
-                    is_contract: true
-                    classification: Real Estate Agt
-        "400":
-          $ref: '#/components/responses/InvalidRequestId'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "404":
-          $ref: '#/components/responses/RequestNotFound'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-  /classifications:
-    get:
-      tags:
-        - Document Classification
-      summary: Get multiple document classification statuses
-      description: |-
-        Retrieves the status of one or more document classification status requests. Each request ID should be
-        provided as a query parameter, e.g. `/classifications?request_id=abcde&request_id=fghijk`
-
-        If any or all request IDs are invalid or not found, the overall response will be
-        `200 Success`, and the response body will contain the individual error messages for
-        each request ID.
-
-        A maximum of 1000 request IDs can be included in a single query.
-      operationId: GetClassificationRequestStatuses
-      parameters:
-        - name: request_id
-          in: query
-          description: Request ID
-          required: true
-          style: form
-          explode: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The status of multiple document classification requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetMultipleClassificationStatuses'
-        "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      x-code-samples:
-        - lang: shell
-          label: cURL
-          source: |-
-            curl https://us.app.zuva.ai/api/v2/classifications?request_id={id_1}&request_id={id_2} \
-                 -H 'Authorization: Bearer {access-token}'
   /extraction:
     post:
       tags:
@@ -202,7 +53,7 @@ paths:
               $ref: '#/components/schemas/CreateExtractionRequestsBody'
         required: true
       responses:
-        "202":
+        '202':
           description: See response body for status of each request.
           content:
             application/json:
@@ -210,6 +61,7 @@ paths:
                 $ref: '#/components/schemas/ExtractionRequestsAccepted'
               examples:
                 Success:
+                  summary: Extraction request successfully created
                   value:
                     file_ids:
                       - file_id: c5e407f1qk1er7odm6tg
@@ -217,24 +69,24 @@ paths:
                           - c83868ae-269a-4a1b-b2af-c53e5f91efca
                         request_id: c5e463f1qk154j5e3sjg
                         status: queued
-        "400":
+        '400':
           description: Malformed request, missing/invalid `file_ids` or `field_ids` attribute.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /extraction/{request_id}:
     get:
       tags:
         - Field Extraction
-      summary: Get extraction status
+      summary: Get extraction request
       description: Retrieves the status of an extraction request.
       operationId: GetExtractionRequestStatus
       parameters:
@@ -248,7 +100,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The status of the extraction request
           content:
             application/json:
@@ -256,19 +108,20 @@ paths:
                 $ref: '#/components/schemas/ExtractionRequestStatus'
               examples:
                 Complete:
+                  summary: Extraction request completed successfully
                   value:
                     file_id: c5e407f1qk1er7odm6tg
                     request_id: c5e463f1qk154j5e3sjg
                     status: complete
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /extraction/{request_id}/results/text:
     get:
@@ -290,33 +143,33 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The text result of an extraction
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetExtractionTextResultResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           description: Results not ready yet
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /extractions:
     get:
       tags:
         - Field Extraction
-      summary: Get multiple extraction statuses
+      summary: Get extraction requests
       description: |-
         Retrieves the status of one or more extraction requests. Each request ID should be
         provided as a query parameter, e.g. `/extractions?request_id=abcde&request_id=fghijk`
@@ -330,39 +183,38 @@ paths:
       parameters:
         - name: request_id
           in: query
-          description: Request ID
+          description: Extraction request IDs
           required: true
           style: form
           explode: true
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+          example:
+            - id_1
+            - id_2
       responses:
-        "200":
+        '200':
           description: The status of multiple extraction requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetMultipleExtractionsResponse'
-        "400":
+                $ref: '#/components/schemas/ExtractionStatuses'
+        '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-      x-code-samples:
-        - lang: shell
-          label: cURL
-          source: |-
-            curl https://us.app.zuva.ai/api/v2/extractions?request_id={id_1}&request_id={id_2} \
-                 -H 'Authorization: Bearer {access-token}'
   /fields:
     get:
       tags:
@@ -374,20 +226,19 @@ paths:
         Metadata for non-custom fields will include all properties, but the scores (precision, recall etc.) will be zero.
       operationId: ListFields
       responses:
-        "200":
-          description: |-
-            List of fields with metadata.
+        '200':
+          description: List of fields with metadata.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FieldListResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
@@ -407,25 +258,25 @@ paths:
               $ref: '#/components/schemas/PostFieldRequest'
         required: true
       responses:
-        "201":
+        '201':
           description: ID of newly created field
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NewFieldResponse'
-        "400":
+        '400':
           description: Specified `from_field_id` does not exist
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /fields/{field_id}/accuracy:
@@ -433,7 +284,7 @@ paths:
       tags:
         - Fields
       summary: Get field accuracy
-      description: "Gets the scores for a custom field, including precision, recall and f-score."
+      description: Gets the scores for a custom field, including precision, recall and f-score.
       operationId: GetFieldAccuracy
       parameters:
         - name: field_id
@@ -446,30 +297,30 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The field's accuracy
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FieldAccuracyResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidFieldId'
-        "404":
+        '404':
           $ref: '#/components/responses/FieldNotFound'
-        "409":
+        '409':
           description: The field has not finished training yet
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /fields/{field_id}/metadata:
     get:
       tags:
         - Fields
       summary: Get field metadata
-      description: "Gets field metadata and returns `field_id`, `name`, `description`, `read_only`, `is_trained`, `file_ids`"
+      description: Gets field metadata and returns `field_id`, `name`, `description`, `read_only`, `is_trained`, `file_ids`
       operationId: GetFieldMetadata
       parameters:
         - name: field_id
@@ -482,17 +333,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The field's metadata
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FieldMetadataResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidFieldId'
-        "404":
+        '404':
           $ref: '#/components/responses/FieldNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
     put:
       tags:
@@ -518,26 +369,26 @@ paths:
               $ref: '#/components/schemas/PutFieldMetadataRequest'
         required: true
       responses:
-        "204":
+        '204':
           description: The metadata for the field was successfully updated
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidFieldId'
-        "404":
+        '404':
           $ref: '#/components/responses/FieldNotFound'
-        "405":
+        '405':
           description: Cannot update a read-only field
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /fields/{field_id}/train:
     post:
       tags:
         - Training
-      summary: Create a field training request
+      summary: Create training request
       description: |-
         Starts training on a field and returns the request id.
 
@@ -564,9 +415,17 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/FieldTrainingRequest'
+            examples:
+              TrainingExample:
+                summary: Training data
+                value:
+                  - file_id: c5e407f1qk1er7odm6tg
+                    locations:
+                      - start: 123
+                        end: 456
         required: true
       responses:
-        "202":
+        '202':
           description: The status of the training request
           content:
             application/json:
@@ -574,36 +433,37 @@ paths:
                 $ref: '#/components/schemas/TrainingRequestStatus'
               examples:
                 Success:
+                  summary: Training request successfully enqueued
                   value:
-                    field_id: "12345678-1234-1234-1234-123456789012"
+                    field_id: 12345678-1234-1234-1234-123456789012
                     request_id: c5e463f1qk154j5e3sjg
                     status: queued
-        "400":
+        '400':
           description: Invalid request body
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/FieldNotFound'
-        "409":
-          description: "Conflict: training request ongoing"
+        '409':
+          description: 'Conflict: training request ongoing'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /fields/{field_id}/train/{request_id}:
     get:
       tags:
         - Training
-      summary: Get training request status
+      summary: Get training request
       description: Retrieves the status of a field training request.
       operationId: GetTrainingRequestStatus
       parameters:
@@ -626,7 +486,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The status of the training request
           content:
             application/json:
@@ -634,19 +494,20 @@ paths:
                 $ref: '#/components/schemas/TrainingRequestStatus'
               examples:
                 Complete:
+                  summary: Training request completed successfully
                   value:
                     field_id: 12345678-1234-1234-1234-123456789012
                     request_id: c5e463f1qk154j5e3sjg
                     status: complete
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /fields/{field_id}/validation-details:
     get:
@@ -665,7 +526,10 @@ paths:
 
         * `fp`: False Positive - an annotation that the user did not add, but that the AI suggests they add to training.
 
-        If the example `type` is `tp` or `fp`, the `location` refers to the text found by the ML. If the example `type` is `fn`,
+        * `na`: Not Applicable - an annotation that was not used for validation, either because it was part of the initial
+        training batch, or because the file was a duplicate of a file that was already trained on.
+
+        If the example `type` is `tp` or `fp`, the `location` refers to the text found by the ML. If the example `type` is `fn` or `na`,
         the `location` refers to the original user highlight that was missed.
       operationId: GetFieldValidationDetails
       parameters:
@@ -679,23 +543,23 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The field's validation details
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FieldValidationDetailsResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidFieldId'
-        "404":
+        '404':
           $ref: '#/components/responses/FieldNotFound'
-        "409":
+        '409':
           description: A training request is in progress for this field
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /files:
     post:
@@ -712,8 +576,11 @@ paths:
         If not provided, the content type will be automatically detected and returned in the
         `attributes` of the response. Plain text content must be UTF-8 encoded.
 
-        Files are deleted from the system after 48 hours. Your file's expiration date
-        can be found in the response of this API call
+        For Microsoft Word documents (.doc and .docx extensions), the header value X-Attr-OCR=msword can be used to bypass OCR
+        and instead read the characters and layout directly from the original file.
+
+        Files are deleted from the system after 7 days by default, configurable to a maximum of 14 days.
+        Your file's expiration date can be found in the response of this API call
       operationId: SubmitFile
       requestBody:
         description: The file content
@@ -722,35 +589,76 @@ paths:
             schema:
               type: string
               format: binary
-              example: <binary file content>
-          plain/text:
+            examples:
+              Binary:
+                summary: Raw file content
+                value: <binary file content>
+          text/plain:
             schema:
               type: string
-              example: UTF-8 string
+            examples:
+              Binary:
+                summary: Raw text file content
+                value: UTF-8 string
           application/eocr:
             schema:
               type: string
               format: binary
-              example: <binary file content>
+            examples:
+              Binary:
+                summary: EOCR file content
+                value: <binary file content>
+          application/msword:
+            schema:
+              type: string
+              format: binary
+            examples:
+              Binary:
+                summary: Word doc file content
+                value: <binary file content>
+          application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+            schema:
+              type: string
+              format: binary
+            examples:
+              Binary:
+                summary: Word docx file content
+                value: <binary file content>
         required: true
+      parameters:
+        - name: X-Attr-OCR
+          in: header
+          description: The type of OCR operation to perform on the file
+          example: ocr
+          required: false
+          schema:
+            $ref: '#/components/schemas/OcrTypeEnum'
+        - name: X-Attr-MSWord-GenerateImages
+          in: header
+          description: Indicates whether to generate page images for MS Word documents when performing OCR
+          example: true
+          required: false
+          schema:
+            type: string
+            default: false
       responses:
-        "201":
+        '201':
           description: The file was uploaded successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileCreatedResponse'
-        "400":
+        '400':
           description: A required header was not specified, or contained an invalid value
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
       x-code-samples:
@@ -762,6 +670,53 @@ paths:
                  -H 'Accept: application/json' \
                  -H 'Authorization: Bearer {access-token}' \
                  --data-binary '@/path/to/file.pdf'
+    delete:
+      tags:
+        - Files
+      summary: Delete files
+      description: |-
+        Permanently delete all of the specified files. Each file ID should be
+        provided as a query parameter, e.g. `/files?file_id=abcde&file_id=fghijk`
+
+        If any or all file IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each file ID.
+
+        A maximum of 1000 file IDs can be included in a single query.
+      operationId: DeleteFiles
+      parameters:
+        - name: file_id
+          in: query
+          description: File ID
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+          example:
+            - id_1
+            - id_2
+      responses:
+        '200':
+          description: The status of each deletion request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFileStatusArray'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /files/{file_id}:
     delete:
       tags:
@@ -780,163 +735,69 @@ paths:
           schema:
             type: string
       responses:
-        "204":
+        '204':
           description: The file was deleted successfully.
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidFileId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/FileNotFound'
-        "410":
+        '410':
           description: File expired
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-  /language:
-    post:
+  /files/{file_id}/expiration:
+    put:
       tags:
-        - Language Classification
-      summary: Create language requests
-      description: "Creates a new language classification request for each of the specified files, returning one request for each file."
-      operationId: CreateLanguageRequests
-      requestBody:
-        description: The file IDs to create classification requests for.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateLanguageRequestsBody'
-        required: true
-      responses:
-        "202":
-          description: See response body for status of each request.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LanguageRequestsAccepted'
-              examples:
-                Success:
-                  value:
-                    file_ids:
-                      - file_id: c5e407f1qk1er7odm6tg
-                        request_id: c5e463f1qk154j5e3sjg
-                        status: queued
-        "400":
-          description: "Malformed request, missing/invalid `file_ids` attribute."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-  /language/{request_id}:
-    get:
-      tags:
-        - Language Classification
-      summary: Get language request status
-      description: |-
-        Retrieves the status of a language classification request and,
-        if the status is `complete`, its results.
-      operationId: GetLanguageRequestStatus
+        - Files
+      summary: Update file expiry
+      description: Update the expiry on a file. The expiration time can be provided as an absolute timestamp in RFC3339 format (e.g. `2022-12-23T12:34:56Z`), or as an interval relative to the time the request is made (e.g `12h` or `10d`).
+      operationId: UpdateFileExpiry
       parameters:
-        - name: request_id
+        - description: File ID
           in: path
-          description: Request ID
-          example: c5e463f1qk154j5e3sjg
+          name: file_id
           required: true
-          style: simple
-          explode: false
+          schema:
+            type: string
+          example: c5e407f1qk1er7odm6tg
+        - name: Expiration
+          in: header
+          description: Expiration time for the file
+          example: 7d
+          required: false
           schema:
             type: string
       responses:
-        "200":
-          description: The status and results of the language classification request.
+        '200':
+          description: The file was updated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LanguageStatus'
-              examples:
-                Complete:
-                  value:
-                    file_id: c5e407f1qk1er7odm6tg
-                    request_id: c5e463f1qk154j5e3sjg
-                    status: complete
-                    language: English
-        "400":
-          $ref: '#/components/responses/InvalidRequestId'
-        "401":
+                $ref: '#/components/schemas/FileUpdatedResponse'
+        '400':
+          $ref: '#/components/responses/InvalidFileId'
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '404':
+          $ref: '#/components/responses/FileNotFound'
+        '500':
           $ref: '#/components/responses/InternalServerError'
-  /languages:
-    get:
-      tags:
-        - Language Classification
-      summary: Get multiple language classification statuses
-      description: |-
-        Retrieves the status of one or more language classification status requests. Each request ID should be
-        provided as a query parameter, e.g. `/languages?request_id=abcde&request_id=fghijk`
-
-        If any or all request IDs are invalid or not found, the overall response will be
-        `200 Success`, and the response body will contain the individual error messages for
-        each request ID.
-
-        A maximum of 1000 request IDs can be included in a single query.
-      operationId: GetLanguageRequestStatuses
-      parameters:
-        - name: request_id
-          in: query
-          description: Request ID
-          required: true
-          style: form
-          explode: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The status of multiple language classification requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetMultipleLanguageStatuses'
-        "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      x-code-samples:
-        - lang: shell
-          label: cURL
-          source: |-
-            curl https://us.app.zuva.ai/api/v2/languages?request_id={id_1}&request_id={id_2} \
-                 -H 'Authorization: Bearer {access-token}'
   /mlc:
     post:
       tags:
-        - Multi-level Classification
+        - Multi-Level Classification (MLC)
       summary: Create MLC requests
-      description: |-
-        Creates MLC request for each of the specified files.
+      description: Creates an MLC request for each of the specified files.
       operationId: CreateMLCRequests
       requestBody:
         description: The fileIDs to create MLC requests for.
@@ -946,7 +807,7 @@ paths:
               $ref: '#/components/schemas/CreateMLCRequest'
         required: true
       responses:
-        "202":
+        '202':
           description: See response body for status of each request.
           content:
             application/json:
@@ -954,29 +815,30 @@ paths:
                 $ref: '#/components/schemas/MLCRequestsAccepted'
               examples:
                 Success:
+                  summary: Multi-level classification request submitted successfully
                   value:
                     file_ids:
                       - file_id: c5e407f1qk1er7odm6tg
                         request_id: c5e463f1qk154j5e3sjg
                         status: queued
-        "400":
+        '400':
           description: Malformed request or missing/invalid `file_ids` attribute.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /mlc/{request_id}:
     get:
       tags:
-        - Multi-level Classification
-      summary: Get MLC request status
+        - Multi-Level Classification (MLC)
+      summary: Get MLC request
       description: |-
         Retrieves the status of a multi-level classification request and,
         if the status is `complete`, its results.
@@ -992,7 +854,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The status and results of the document classification request.
           content:
             application/json:
@@ -1000,28 +862,36 @@ paths:
                 $ref: '#/components/schemas/MLCStatus'
               examples:
                 Complete:
+                  summary: Multi-level classifier request completed successfully
                   value:
                     file_id: c5e407f1qk1er7odm6tg
                     request_id: c5e463f1qk154j5e3sjg
                     status: complete
-                    classifications: ["Contract", "IP Agt", "License Agt"]
-        "400":
+                    classifications:
+                      - Contract
+                      - IP Agt
+                      - License Agt
+                    language:
+                      code: en
+                      name: English
+                    is_amendment: false
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /mlcs:
     get:
       tags:
-        - Multi-level Classification
-      summary: Get multiple MLC request statuses
+        - Multi-Level Classification (MLC)
+      summary: Get MLC requests
       description: |-
-        Retrieves the status of one or more multi-level classification status requests. Each request ID should be
+        Retrieves the status of one or more Multi-Level Classification status requests. Each request ID should be
         provided as a query parameter, e.g. `/mlcs?request_id=abcde&request_id=fghijk`
 
         If any or all request IDs are invalid or not found, the overall response will be
@@ -1033,44 +903,42 @@ paths:
       parameters:
         - name: request_id
           in: query
-          description: Request ID
+          description: MLC request IDs
           required: true
           style: form
           explode: true
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+          example:
+            - id_1
+            - id_2
       responses:
-        "200":
+        '200':
           description: The status of multiple MLC requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetMultipleMLCStatuses'
-        "400":
+                $ref: '#/components/schemas/MLCStatuses'
+        '400':
           description: Invalid request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-      x-code-samples:
-        - lang: shell
-          label: cURL
-          source: |-
-            curl https://us.app.zuva.ai/api/v2/mlcs?request_id={id_1}&request_id={id_2} \
-                 -H 'Authorization: Bearer {access-token}'
   /normalize/currency:
     post:
       tags:
         - Normalization
       summary: Normalize Currency
-      description: |-
-        Normalize currencies found within a string, returning an array of currency values and their denominations.
+      description: Normalize currencies found within a string, returning an array of currency values and their denominations.
       operationId: NormalizeCurrency
       requestBody:
         description: The string of text to normalize.
@@ -1080,14 +948,14 @@ paths:
               $ref: '#/components/schemas/NormalizeCurrencyRequestBody'
         required: true
       responses:
-        "200":
+        '200':
           description: See response body for status of request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NormalizeCurrencyResponseBody'
-        "400":
-          description: "Malformed request, missing/invalid body."
+        '400':
+          description: Malformed request, missing/invalid body.
           content:
             application/json:
               schema:
@@ -1097,8 +965,7 @@ paths:
       tags:
         - Normalization
       summary: Normalize Date
-      description: |-
-        Normalize dates found within a string, returning an array of date values (day, month, year).
+      description: Normalize dates found within a string, returning an array of date values (day, month, year).
       operationId: NormalizeDate
       requestBody:
         description: The string of text to normalize.
@@ -1108,14 +975,14 @@ paths:
               $ref: '#/components/schemas/NormalizeDateRequestBody'
         required: true
       responses:
-        "200":
+        '200':
           description: See response body for status of request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NormalizeDateResponseBody'
-        "400":
-          description: "Malformed request, missing/invalid body."
+        '400':
+          description: Malformed request, missing/invalid body.
           content:
             application/json:
               schema:
@@ -1137,14 +1004,14 @@ paths:
               $ref: '#/components/schemas/NormalizeDurationRequestBody'
         required: true
       responses:
-        "200":
+        '200':
           description: See response body for status of request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/NormalizeDurationResponseBody'
-        "400":
-          description: "Malformed request, missing/invalid body."
+        '400':
+          description: Malformed request, missing/invalid body.
           content:
             application/json:
               schema:
@@ -1166,7 +1033,7 @@ paths:
               $ref: '#/components/schemas/CreateOcrRequestsBody'
         required: true
       responses:
-        "202":
+        '202':
           description: See response body for status of each request.
           content:
             application/json:
@@ -1174,29 +1041,30 @@ paths:
                 $ref: '#/components/schemas/OcrRequestsAccepted'
               examples:
                 Success:
+                  summary: OCR request successfully submitted
                   value:
                     file_ids:
                       - file_id: c5e407f1qk1er7odm6tg
                         request_id: c5e463f1qk154j5e3sjg
                         status: queued
-        "400":
-          description: "Malformed request, missing/invalid `fileIds` attribute."
+        '400':
+          description: Malformed request, missing/invalid `fileIds` attribute.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HttpError'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
       x-codegen-request-body-name: body
   /ocr/{request_id}:
     get:
       tags:
         - OCR
-      summary: Get OCR request status
+      summary: Get OCR request
       description: Retrieves the status of an OCR request.
       operationId: GetOcrRequestStatus
       parameters:
@@ -1210,7 +1078,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The status of an OCR request
           content:
             application/json:
@@ -1218,19 +1086,82 @@ paths:
                 $ref: '#/components/schemas/OcrRequestStatus'
               examples:
                 Complete:
+                  summary: OCR request completed successfully
                   value:
                     file_id: c5e407f1qk1er7odm6tg
                     request_id: c5e463f1qk154j5e3sjg
                     status: complete
-        "400":
+                    page_count: 10
+                    character_count: 10800
+                    scan_quality: A
+                    scan_score: 100
+          headers:
+            X-Attr-OCR:
+              schema:
+                type: string
+                enum:
+                  - ocr
+                  - msword
+                  - text
+                  - eocr
+              description: The type of OCR operation that was performed.
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "500":
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /ocrs:
+    get:
+      tags:
+        - OCR
+      summary: Get OCR requests
+      description: |-
+        Retrieves the status of one or more OCR status requests. Each request ID should be
+        provided as a query parameter, e.g. `/ocrs?request_id=abcde&request_id=fghijk`
+
+        If any or all request IDs are invalid or not found, the overall response will be
+        `200 Success`, and the response body will contain the individual error messages for
+        each request ID.
+
+        A maximum of 1000 request IDs can be included in a single query.
+      operationId: GetOCRRequestStatuses
+      parameters:
+        - name: request_id
+          in: query
+          description: OCR request IDs
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+          example:
+            - id_1
+            - id_2
+      responses:
+        '200':
+          description: The status of multiple OCR requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OCRStatuses'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HttpError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/eocr:
     get:
@@ -1250,27 +1181,27 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: eOCR document was retrieved successfully.
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-                example: <binary file content>
-        "204":
+              example: <binary file content>
+        '204':
           description: No content of this type was found.
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           $ref: '#/components/responses/OcrNotReady'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/images:
     get:
@@ -1290,27 +1221,27 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Images were retrieved successfully.
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-                example: <binary file content>
-        "204":
+              example: <binary file content>
+        '204':
           description: No content of this type was found.
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           $ref: '#/components/responses/OcrNotReady'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/images/{page_number}:
     get:
@@ -1339,27 +1270,27 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
+        '200':
           description: Image was retrieved successfully.
           content:
             image/png:
               schema:
                 type: string
                 format: binary
-                example: <binary file content>
-        "204":
+              example: <binary file content>
+        '204':
           description: No content of this type was found.
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           $ref: '#/components/responses/OcrNotReady'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/layouts:
     get:
@@ -1379,25 +1310,25 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Layouts were retrieved successfully.
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
-                example: <binary file content>
-        "400":
+              example: <binary file content>
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           $ref: '#/components/responses/OcrNotReady'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
   /ocr/{request_id}/text:
     get:
@@ -1417,136 +1348,43 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The OCR text result
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OcrTextResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/InvalidRequestId'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
+        '404':
           $ref: '#/components/responses/RequestNotFound'
-        "409":
+        '409':
           $ref: '#/components/responses/OcrNotReady'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-  /ocrs:
-    get:
-      tags:
-        - OCR
-      summary: Get multiple OCR statuses
-      description: |-
-        Retrieves the status of one or more OCR status requests. Each request ID should be
-        provided as a query parameter, e.g. `/ocrs?request_id=abcde&request_id=fghijk`
-
-        If any or all request IDs are invalid or not found, the overall response will be
-        `200 Success`, and the response body will contain the individual error messages for
-        each request ID.
-
-        A maximum of 1000 request IDs can be included in a single query.
-      operationId: GetOCRRequestStatuses
-      parameters:
-        - name: request_id
-          in: query
-          description: Request ID
-          required: true
-          style: form
-          explode: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The status of multiple OCR requests
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetMultipleOCRStatuses'
-        "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HttpError'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-      x-code-samples:
-        - lang: shell
-          label: cURL
-          source: |-
-            curl https://us.app.zuva.ai/api/v2/ocrs?request_id={id_1}&request_id={id_2} \
-                 -H 'Authorization: Bearer {access-token}'
 components:
-  responses:
-    FieldNotFound:
-      description: Field not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    FileNotFound:
-      description: File not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    InternalServerError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    InvalidFieldId:
-      description: Invalid field ID
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    InvalidFileId:
-      description: Invalid file ID
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    InvalidRequestId:
-      description: Invalid request ID
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    OcrNotReady:
-      description: OCR results not ready yet
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    RequestNotFound:
-      description: Request not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/HttpError'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: <token>
   schemas:
+    Answer:
+      type: object
+      required:
+        - option
+        - value
+      properties:
+        option:
+          type: string
+          example: a
+        value:
+          type: string
+          example: This is a multiple choice answer
     BoundingBox:
       type: object
       required:
@@ -1567,7 +1405,29 @@ components:
         top:
           type: integer
           example: 2624
+    BoundingBoxSummary:
+      description: This bounding box captures the top left position of the first character and the bottom right position of the last character of the extraction.
+      type: object
+      required:
+        - bottom
+        - left
+        - top
+        - right
+      properties:
+        bottom:
+          type: integer
+          example: 2652
+        left:
+          type: integer
+          example: 228
+        right:
+          type: integer
+          example: 355
+        top:
+          type: integer
+          example: 2624
     BoundingBoxesByPage:
+      description: Bounding boxes for each line of the extraction that occur on a particular page.
       type: object
       required:
         - page
@@ -1589,8 +1449,7 @@ components:
         - end
       properties:
         bounds:
-          description: Deprecated. Please use `bboxes` instead.
-          $ref: '#/components/schemas/BoundingBox'
+          $ref: '#/components/schemas/BoundingBoxSummary'
         bboxes:
           type: array
           items:
@@ -1615,38 +1474,6 @@ components:
           type: array
         percentage:
           type: number
-    ClassificationRequestsAccepted:
-      type: object
-      required:
-        - file_ids
-      properties:
-        file_ids:
-          type: array
-          items:
-            $ref: '#/components/schemas/ClassificationStatus'
-    ClassificationStatus:
-      type: object
-      required:
-        - file_id
-        - request_id
-        - status
-      properties:
-        classification:
-          type: string
-          example: Real Estate Agt
-        error:
-          $ref: '#/components/schemas/HttpErrorDetails'
-        file_id:
-          type: string
-          example: c5e407f1qk1er7odm6tg
-        is_contract:
-          type: boolean
-          example: true
-        request_id:
-          type: string
-          example: c5e463f1qk154j5e3sjg
-        status:
-          $ref: '#/components/schemas/StatusEnum'
     Country:
       type: object
       required:
@@ -1659,18 +1486,6 @@ components:
         name:
           description: The ISO 3166 country name, eg. "Canada".
           type: string
-    CreateClassificationRequest:
-      type: object
-      required:
-        - file_ids
-      properties:
-        file_ids:
-          type: array
-          description: The files to classify
-          example:
-            - c5e407f1qk1er7odm6tg
-          items:
-            type: string
     CreateExtractionRequestsBody:
       type: object
       required:
@@ -1685,18 +1500,6 @@ components:
             type: string
         file_ids:
           type: array
-          example:
-            - c5e407f1qk1er7odm6tg
-          items:
-            type: string
-    CreateLanguageRequestsBody:
-      type: object
-      required:
-        - file_ids
-      properties:
-        file_ids:
-          type: array
-          description: The files to analyze.
           example:
             - c5e407f1qk1er7odm6tg
           items:
@@ -1733,7 +1536,7 @@ components:
       properties:
         value:
           type: string
-          example: 2347.00
+          example: 2347
         symbol:
           type: string
           example: dollars
@@ -1756,6 +1559,35 @@ components:
         year:
           type: integer
           example: 2022
+    DefinedTerm:
+      type: object
+      required:
+        - term
+        - spans
+      properties:
+        term:
+          type: string
+          example: Landlord
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterSpan'
+    DeleteFileStatus:
+      type: object
+      required:
+        - file_id
+        - status
+      properties:
+        file_id:
+          type: string
+          example: 5e407f1qk1er7odm6tg
+        status:
+          type: string
+          example: complete
+    DeleteFileStatusArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/DeleteFileStatus'
     DurationValues:
       type: object
       required:
@@ -1768,6 +1600,28 @@ components:
         value:
           type: integer
           example: 4
+    ExtractionCreatedResponse:
+      type: object
+      required:
+        - file_id
+        - request_id
+        - status
+        - field_ids
+      properties:
+        file_id:
+          type: string
+          example: c5e407f1qk1er7odm6tg
+        field_ids:
+          type: array
+          example:
+            - c83868ae-269a-4a1b-b2af-c53e5f91efca
+          items:
+            type: string
+        request_id:
+          type: string
+          example: c5e463f1qk154j5e3sjg
+        status:
+          $ref: '#/components/schemas/StatusEnum'
     ExtractionRequestStatus:
       type: object
       required:
@@ -1777,12 +1631,6 @@ components:
       properties:
         error:
           $ref: '#/components/schemas/HttpErrorDetails'
-        field_ids:
-          type: array
-          example:
-            - c83868ae-269a-4a1b-b2af-c53e5f91efca
-          items:
-            type: string
         file_id:
           type: string
           example: c5e407f1qk1er7odm6tg
@@ -1799,13 +1647,17 @@ components:
         file_ids:
           type: array
           items:
-            $ref: '#/components/schemas/ExtractionRequestStatus'
+            $ref: '#/components/schemas/ExtractionCreatedResponse'
     ExtractionResult:
       type: object
       required:
         - field_id
         - extractions
       properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
         extractions:
           type: array
           items:
@@ -1814,6 +1666,38 @@ components:
           type: string
           example: 668ee3b5-e15a-439f-9475-05a21755a5c1
       description: A `Result` contains an array of all extractions of a field from the file.
+    ExtractionStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ExtractionRequestStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: cc1ohrhqqhqthd7h5lag
+              status: complete
+              request_id: cc1oi51qqhquidfjmiu0
     FieldAccuracyResponse:
       type: object
       required:
@@ -1996,6 +1880,7 @@ components:
         - tp
         - fn
         - fp
+        - na
     FileAttributes:
       type: object
       required:
@@ -2024,7 +1909,7 @@ components:
         expiration:
           type: string
           description: The file expiration in RFC3339 format
-          example: 2021-10-07T12:07:57Z
+          example: '2021-10-07T12:07:57Z'
         file_id:
           type: string
           description: The ID of the created file resource
@@ -2033,13 +1918,24 @@ components:
           type: array
           description: Unused
           example:
-            - ""
+            - ''
           items:
             type: string
         size:
           type: integer
           description: The file size in bytes
           example: 23849850
+    FileUpdatedResponse:
+      properties:
+        expiration:
+          description: The file expiration in RFC3339 format
+          example: '2021-10-07T12:07:57Z'
+          type: string
+        file_id:
+          description: The ID of the updated file resource
+          example: c5e407f1qk1er7odm6tg
+          type: string
+      type: object
     GetExtractionTextResultResponse:
       type: object
       required:
@@ -2057,170 +1953,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExtractionResult'
-    GetMultipleClassificationStatuses:
-      type: object
-      required:
-        - errors
-        - num_errors
-        - num_found
-        - statuses
-      properties:
-        errors:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HttpError'
-          example:
-            cc1oi51qqhquidfjhiu0:
-              error:
-                code: request_not_found
-                message: The specified request ID cannot be found
-        num_errors:
-          type: integer
-          example: 1
-        num_found:
-          type: integer
-          example: 1
-        statuses:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/ClassificationStatus'
-          example:
-            cc1oi51qqhquidfjmiu0:
-              file_id: c5e407f1qk1er7odm6tg
-              status: complete
-              request_id: c5e463f1qk154j5e3sjg
-              classification: Real Estate Agt
-              is_contract: true
-    GetMultipleExtractionsResponse:
-      type: object
-      required:
-        - errors
-        - num_errors
-        - num_found
-        - statuses
-      properties:
-        errors:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HttpError'
-          example:
-            cc1oi51qqhquidfjhiu0:
-              error:
-                code: request_not_found
-                message: The specified request ID cannot be found
-        num_errors:
-          type: integer
-          example: 1
-        num_found:
-          type: integer
-          example: 1
-        statuses:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/ExtractionRequestStatus'
-          example:
-            cc1oi51qqhquidfjmiu0:
-              file_id: cc1ohrhqqhqthd7h5lag
-              status: complete
-              request_id: cc1oi51qqhquidfjmiu0
-    GetMultipleLanguageStatuses:
-      type: object
-      required:
-        - errors
-        - num_errors
-        - num_found
-        - statuses
-      properties:
-        errors:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HttpError'
-          example:
-            cc1oi51qqhquidfjhiu0:
-              error:
-                code: request_not_found
-                message: The specified request ID cannot be found
-        num_errors:
-          type: integer
-          example: 1
-        num_found:
-          type: integer
-          example: 1
-        statuses:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/LanguageStatus'
-          example:
-            cc1oi51qqhquidfjmiu0:
-              file_id: c5e407f1qk1er7odm6tg
-              status: complete
-              request_id: c5e463f1qk154j5e3sjg
-              language: English
-    GetMultipleMLCStatuses:
-      type: object
-      required:
-        - errors
-        - num_errors
-        - num_found
-        - statuses
-      properties:
-        errors:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HttpError'
-          example:
-            cc1oi51qqhquidfjhiu0:
-              error:
-                code: request_not_found
-                message: The specified request ID cannot be found
-        num_errors:
-          type: integer
-          example: 1
-        num_found:
-          type: integer
-          example: 1
-        statuses:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/MLCStatus'
-          example:
-            cc1oi51qqhquidfjmiu0:
-              file_id: c5e407f1qk1er7odm6tg
-              status: complete
-              request_id: c5e463f1qk154j5e3sjg
-              classifications: ["Contract", "IP Agt", "License Agt"]
-    GetMultipleOCRStatuses:
-      type: object
-      required:
-        - errors
-        - num_errors
-        - num_found
-        - statuses
-      properties:
-        errors:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/HttpError'
-          example:
-            cc1oi51qqhquidfjhiu0:
-              error:
-                code: request_not_found
-                message: The specified request ID cannot be found
-        num_errors:
-          type: integer
-          example: 1
-        num_found:
-          type: integer
-          example: 1
-        statuses:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/OcrRequestStatus'
-          example:
-            cc1oi51qqhquidfjmiu0:
-              file_id: c5e407f1qk1er7odm6tg
-              status: complete
-              request_id: c5e463f1qk154j5e3sjg
     HttpError:
       type: object
       required:
@@ -2265,35 +1997,6 @@ components:
           type: string
         percentage:
           type: number
-    LanguageRequestsAccepted:
-      type: object
-      required:
-        - file_ids
-      properties:
-        file_ids:
-          type: array
-          items:
-            $ref: '#/components/schemas/LanguageStatus'
-    LanguageStatus:
-      type: object
-      required:
-        - file_id
-        - request_id
-        - status
-      properties:
-        error:
-          $ref: '#/components/schemas/HttpErrorDetails'
-        file_id:
-          type: string
-          example: c5e407f1qk1er7odm6tg
-        language:
-          type: string
-          example: English
-        request_id:
-          type: string
-          example: c5e463f1qk154j5e3sjg
-        status:
-          $ref: '#/components/schemas/StatusEnum'
     Location:
       type: object
       required:
@@ -2306,6 +2009,18 @@ components:
         start:
           type: integer
           example: 123
+    MLCLanguage:
+      type: object
+      required:
+        - name
+        - code
+      properties:
+        code:
+          type: string
+          example: en
+        name:
+          type: string
+          example: English
     MLCRequestsAccepted:
       type: object
       required:
@@ -2326,6 +2041,14 @@ components:
           type: array
           items:
             type: string
+        is_amendment:
+          type: boolean
+          example: true
+        is_master_agreement:
+          type: boolean
+          example: false
+        language:
+          $ref: '#/components/schemas/MLCLanguage'
         error:
           $ref: '#/components/schemas/HttpErrorDetails'
         file_id:
@@ -2336,6 +2059,42 @@ components:
           example: c5e463f1qk154j5e3sjg
         status:
           $ref: '#/components/schemas/StatusEnum'
+    MLCStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MLCStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
+              classifications:
+                - Contract
+                - IP Agt
+                - License Agt
     NewFieldResponse:
       type: object
       properties:
@@ -2432,6 +2191,38 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DurationValues'
+    OCRStatuses:
+      type: object
+      required:
+        - errors
+        - num_errors
+        - num_found
+        - statuses
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HttpError'
+          example:
+            cc1oi51qqhquidfjhiu0:
+              error:
+                code: request_not_found
+                message: The specified request ID cannot be found
+        num_errors:
+          type: integer
+          example: 1
+        num_found:
+          type: integer
+          example: 1
+        statuses:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/OcrRequestStatus'
+          example:
+            cc1oi51qqhquidfjmiu0:
+              file_id: c5e407f1qk1er7odm6tg
+              status: complete
+              request_id: c5e463f1qk154j5e3sjg
     OcrRequestStatus:
       type: object
       required:
@@ -2449,6 +2240,18 @@ components:
           example: c5e463f1qk154j5e3sjg
         status:
           $ref: '#/components/schemas/StatusEnum'
+        page_count:
+          type: integer
+          example: 10
+        character_count:
+          type: integer
+          example: 10000
+        scan_quality:
+          type: string
+          example: A
+        scan_score:
+          type: integer
+          example: 100
     OcrRequestsAccepted:
       type: object
       required:
@@ -2470,15 +2273,24 @@ components:
         text:
           type: string
           example: The text of the document
+    OcrTypeEnum:
+      type: string
+      example: ocr
+      enum:
+        - auto
+        - ocr
+        - msword
+        - text
+        - eocr
     PostFieldRequest:
       type: object
       required:
-        - field_name
+        - name
       properties:
         description:
           type: string
           example: A description of the field
-        field_name:
+        name:
           type: string
           example: My New Field
         from_field_id:
@@ -2506,6 +2318,41 @@ components:
         start:
           type: integer
           example: 1
+    SpanIssue:
+      type: object
+      properties:
+        file_id:
+          type: string
+          example: cdcpbqd9j3v1l06vsds0
+        span_problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpanProblems'
+    SpanIssues:
+      type: array
+      items:
+        $ref: '#/components/schemas/SpanIssue'
+    SpanProblems:
+      type: object
+      properties:
+        index:
+          type: integer
+        spans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Spans'
+        issue_type:
+          type: string
+          example: Invalid Span
+    Spans:
+      type: object
+      properties:
+        end:
+          type: integer
+        start:
+          type: integer
+        label:
+          type: integer
     StatusEnum:
       type: string
       example: complete
@@ -2517,13 +2364,27 @@ components:
     TextExtraction:
       type: object
       properties:
+        currencies:
+          items:
+            $ref: '#/components/schemas/CurrencyValues'
+          type: array
+        dates:
+          items:
+            $ref: '#/components/schemas/DateValues'
+          type: array
+        defined_term:
+          $ref: '#/components/schemas/DefinedTerm'
+        durations:
+          items:
+            $ref: '#/components/schemas/DurationValues'
+          type: array
         spans:
           type: array
           items:
             $ref: '#/components/schemas/CharacterSpan'
         text:
           type: string
-          example: "LEASE"
+          example: LEASE
       description: A `Result` contains an array of all extractions of a field from the file.
     TrainingRequestStatus:
       type: object
@@ -2542,11 +2403,67 @@ components:
           example: c5e463f1qk154j5e3sjg
         status:
           $ref: '#/components/schemas/StatusEnum'
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: <token>
-security:
-  - bearerAuth: [] # use the same name as above
-x-original-swagger-version: "2.0"
+        span_issues:
+          $ref: '#/components/schemas/SpanIssues'
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    InvalidRequestId:
+      description: Invalid request ID
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    RequestNotFound:
+      description: Request not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    InvalidFieldId:
+      description: Invalid field ID
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    FieldNotFound:
+      description: Field not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    InvalidFileId:
+      description: Invalid file ID
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    FileNotFound:
+      description: File not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+    OcrNotReady:
+      description: OCR results not ready yet
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/HttpError'
+x-original-swagger-version: '2.0'
