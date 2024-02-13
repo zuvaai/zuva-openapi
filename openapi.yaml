@@ -24,7 +24,7 @@ tags:
   - name: Field Extraction
     description: Identify and extract common legal clauses, provisions and data points from unstructured documents and contracts, including ones written in non-standard language.
   - name: Multi-Level Classification (MLC)
-    description: (In Alpha) Find out what type of contracts and contract-related documents you have. The new Multi-Level Classification service provides an order-of-magnitude increase in the number of classification models compared to the classic Document Classification service.
+    description: Find out what type of contracts and contract-related documents you have. The new Multi-Level Classification service provides an order-of-magnitude increase in the number of classification models compared to the classic Document Classification service.
   - name: Normalization
     description: (In Alpha) Normalize a string containing currencies, dates or durations.
   - name: OCR
@@ -148,7 +148,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetExtractionTextResultResponse'
+                $ref: '#/components/schemas/ExtractionTextResultResponse'
         '400':
           $ref: '#/components/responses/InvalidRequestId'
         '401':
@@ -1652,6 +1652,7 @@ components:
       type: object
       required:
         - field_id
+        - field_name
         - extractions
       properties:
         answers:
@@ -1665,6 +1666,8 @@ components:
         field_id:
           type: string
           example: 668ee3b5-e15a-439f-9475-05a21755a5c1
+        field_name:
+          type: string
       description: A `Result` contains an array of all extractions of a field from the file.
     ExtractionStatuses:
       type: object
@@ -1698,6 +1701,23 @@ components:
               file_id: cc1ohrhqqhqthd7h5lag
               status: complete
               request_id: cc1oi51qqhquidfjmiu0
+    ExtractionTextResultResponse:
+      type: object
+      required:
+        - file_id
+        - request_id
+        - results
+      properties:
+        file_id:
+          type: string
+          example: cdcpbqd9j3v1l06vsds0
+        request_id:
+          type: string
+          example: cdcpcgt9j3va54jmj4b0
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtractionResult'
     FieldAccuracyResponse:
       type: object
       required:
@@ -1936,23 +1956,6 @@ components:
           example: c5e407f1qk1er7odm6tg
           type: string
       type: object
-    GetExtractionTextResultResponse:
-      type: object
-      required:
-        - file_id
-        - request_id
-        - results
-      properties:
-        file_id:
-          type: string
-          example: cdcpbqd9j3v1l06vsds0
-        request_id:
-          type: string
-          example: cdcpcgt9j3va54jmj4b0
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExtractionResult'
     HttpError:
       type: object
       required:
