@@ -1443,6 +1443,7 @@ components:
     CharacterSpan:
       type: object
       required:
+        - score
         - bboxes
         - pages
         - start
@@ -1459,6 +1460,10 @@ components:
           example: 637
         pages:
           $ref: '#/components/schemas/Span'
+        score:
+          type: number
+          format: double
+          example: 0.9999379754341181
         start:
           type: integer
           example: 632
